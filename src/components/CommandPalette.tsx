@@ -51,10 +51,10 @@ export function CommandPalette({ isOpen, onClose, onNavigate, onResetData }: Com
   const filteredServices = SERVICES.filter(service => {
     const q = query.toLowerCase().trim();
     if (!q) return true;
-    const inst = INSTITUTIONS[service.institutionId]?.name.toLowerCase() || '';
+    const inst = INSTITUTIONS.find(i => i.id === service.institutionId)?.name.toLowerCase() || '';
     return (
       service.name.toLowerCase().includes(q) ||
-      service.shortDescription.toLowerCase().includes(q) ||
+      service.description.toLowerCase().includes(q) ||
       inst.includes(q) ||
       service.category.toLowerCase().includes(q)
     );
@@ -219,7 +219,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate, onResetData }: Com
                               isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                             }`}
                           >
-                            {inst?.name} · {service.requiredDocuments.length} docs required
+                            {inst?.name} · {service.documents.length} docs required
                           </p>
                         </div>
                       </div>
@@ -232,7 +232,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate, onResetData }: Com
                               : 'bg-primary-soft text-accent-foreground'
                           }`}
                         >
-                          ~{service.baseServiceTimeMin * 2}m wait
+                          ~{service.avgServiceMins * 2}m wait
                         </span>
                         <ArrowRight
                           className={`size-4 transition-transform ${

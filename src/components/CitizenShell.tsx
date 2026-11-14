@@ -73,11 +73,11 @@ export function CitizenShell({ children, activePath = '/', onNavigate }: Citizen
   if (primaryToken) {
     const serviceTokens = tokens
       .filter(t => t.serviceId === primaryToken.serviceId && t.status === 'waiting')
-      .sort((a, b) => a.issuedAt - b.issuedAt);
+      .sort((a, b) => a.createdAt - b.createdAt);
     const tokenIndex = serviceTokens.findIndex(t => t.id === primaryToken.id);
     tokenPosition = tokenIndex !== -1 ? tokenIndex + 1 : 1;
     const targetService = services.find(s => s.id === primaryToken.serviceId);
-    const baseTime = targetService?.baseServiceTimeMin || 6;
+    const baseTime = targetService?.avgServiceMins || 6;
     tokenWaitMin = Math.max(3, tokenPosition * baseTime);
   }
 

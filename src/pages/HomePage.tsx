@@ -46,10 +46,10 @@ export function HomePage({ onNavigate }: HomePageProps) {
     liveService = services.find(s => s.id === liveToken.serviceId);
     const serviceWaiting = tokens
       .filter(t => t.serviceId === liveToken.serviceId && t.status === 'waiting')
-      .sort((a, b) => a.issuedAt - b.issuedAt);
+      .sort((a, b) => a.createdAt - b.createdAt);
     const idx = serviceWaiting.findIndex(t => t.id === liveToken.id);
     livePosition = idx !== -1 ? idx + 1 : 1;
-    const baseWait = liveService?.baseServiceTimeMin || 6;
+    const baseWait = liveService?.avgServiceMins || 6;
     liveWaitMin = Math.max(3, livePosition * baseWait);
     nowServingToken = tokens.find(t => t.serviceId === liveToken.serviceId && t.status === 'serving');
   }
@@ -340,7 +340,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 <div className="flex items-center justify-between">
                   <CategoryIcon category={catKey} size="lg" />
                   <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground border border-border">
-                    {catKey === 'healthcare' ? '4 OPDs' : catKey === 'certificates' ? '4 Certificates' : '3 Education'}
+                    {catKey === 'hospital' ? '4 OPDs' : catKey === 'government' ? '4 Services' : '3 Education'}
                   </span>
                 </div>
 

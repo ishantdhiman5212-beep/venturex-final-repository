@@ -79,6 +79,7 @@ export interface ApplicationUpload {
   fileData?: string;
   thumbnail?: string;
   previewUrl?: string;
+  rawFile?: File;
   ocrVerified?: boolean;
   ocrScore?: number;
   ocrDetails?: string;

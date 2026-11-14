@@ -10,7 +10,8 @@ import {
   Volume2,
   FileText,
   Building,
-  RotateCcw
+  RotateCcw,
+  Shield
 } from 'lucide-react';
 import { usePingMEStore } from '../lib/store';
 import { INSTITUTIONS, getTokenQueuePosition, estimateWaitTime, getServingTokens, getWaitingTokens } from '../data/mockData';
