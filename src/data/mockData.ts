@@ -319,6 +319,12 @@ const CITIZEN_NAMES = [
   'Ritu Bansal', 'Abhishek Sen', 'Gayatri Hegde', 'Nikhil Jain'
 ];
 
+export function generateOtp(): string {
+  const p1 = Math.floor(100 + Math.random() * 900);
+  const p2 = Math.floor(100 + Math.random() * 900);
+  return `${p1} ${p2}`;
+}
+
 export function formatTokenNumber(prefix: string, seq: number): string {
   return `${prefix}-${String(seq).padStart(3, '0')}`;
 }
@@ -497,6 +503,19 @@ export function generateInitialState(now = Date.now()): AppState {
       const activeCounters = Math.min(s.counters, 2);
       for (let c = 1; c <= activeCounters; c++) {
         const createdAt = now - Math.round((20 + prng() * 15) * 60000);
+        const sampleDocs = s.documents.map(d => ({
+          requirementId: d.id,
+          requirementLabel: d.label,
+          fileName: `${d.id}_verified.pdf`,
+          sizeBytes: 340000 + Math.round(prng() * 400000),
+          mimeType: 'application/pdf',
+          uploadedAt: createdAt,
+          simulated: true,
+          ocrVerified: true,
+          ocrScore: 98,
+          ocrDetails: 'AI Pre-Check Passed: Clear resolution, applicant name and seal authenticated.',
+        }));
+
         tokens.push({
           id: createId('PMQ'),
           number: formatTokenNumber(s.prefix, seq),
@@ -509,6 +528,10 @@ export function generateInitialState(now = Date.now()): AppState {
           counter: c,
           createdAt,
           calledAt: now - Math.round(prng() * 5 * 60000),
+          otp: generateOtp(),
+          docStatus: 'AI_VERIFIED',
+          uploadedDocs: sampleDocs,
+          venue: s.institutionId,
         });
       }
     }
@@ -516,6 +539,19 @@ export function generateInitialState(now = Date.now()): AppState {
     // Currently waiting tokens
     for (let w = 0; w < cfg.waiting; w++) {
       const createdAt = now - Math.round((cfg.waiting - w) * (3 + prng() * 3) * 60000);
+      const tokenDocs = s.documents.map(d => ({
+        requirementId: d.id,
+        requirementLabel: d.label,
+        fileName: `${d.id}_document.pdf`,
+        sizeBytes: 250000 + Math.round(prng() * 500000),
+        mimeType: 'application/pdf',
+        uploadedAt: createdAt,
+        simulated: true,
+        ocrVerified: true,
+        ocrScore: 97,
+        ocrDetails: 'Verified via OCR Engine: Document headers match requirements.',
+      }));
+
       const tokenObj: Token = {
         id: createId('PMQ'),
         number: formatTokenNumber(s.prefix, seq),
@@ -526,6 +562,10 @@ export function generateInitialState(now = Date.now()): AppState {
         status: 'waiting',
         priority: w === 1 && s.category === 'hospital',
         createdAt,
+        otp: generateOtp(),
+        docStatus: 'AI_VERIFIED',
+        uploadedDocs: tokenDocs,
+        venue: s.institutionId,
       };
 
       if (s.requiresReview) {

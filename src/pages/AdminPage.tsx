@@ -36,6 +36,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     applications,
     callNextToken,
     completeToken,
+    verifyOtpAndCompleteToken,
     cancelToken,
     reviewApplication,
     toggleService,
@@ -49,6 +50,9 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
   const [correctionNote, setCorrectionNote] = useState('');
   const [adminApiKey, setAdminApiKey] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [inputOtp, setInputOtp] = useState<string>('');
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [inspectDocsToken, setInspectDocsToken] = useState<Token | null>(null);
 
   const institution = INSTITUTIONS.find(i => i.id === selectedInstId) || INSTITUTIONS[0];
   const instServices = services.filter(s => s.institutionId === selectedInstId);
@@ -126,6 +130,54 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
         <div className="fixed top-20 right-6 z-50 flex items-center gap-2 rounded-xl border border-primary/20 bg-card px-4 py-2.5 text-xs font-bold text-foreground shadow-elevated animate-in fade-in slide-in-from-top-4">
           <Volume2 className="size-4 text-primary" />
           <span>{statusMessage}</span>
+        </div>
+      )}
+
+      {/* Inspect Docs Modal */}
+      {inspectDocsToken && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="relative max-w-xl w-full rounded-3xl bg-card border border-border p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">
+                  Verified Documents: Token {inspectDocsToken.number}
+                </h3>
+                <p className="text-xs text-muted-foreground">{inspectDocsToken.citizenName} • {inspectDocsToken.phone}</p>
+              </div>
+              <button
+                onClick={() => setInspectDocsToken(null)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3 max-h-[50vh] overflow-y-auto">
+              {inspectDocsToken.uploadedDocs?.map((doc, idx) => (
+                <div key={idx} className="rounded-xl border border-border bg-muted/40 p-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground">{doc.requirementLabel || doc.fileName}</span>
+                    <span className="text-emerald-600 font-bold">✓ AI Verified</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{doc.fileName} ({formatBytes(doc.sizeBytes)})</p>
+                  {doc.ocrDetails && (
+                    <p className="mt-2 text-[11px] text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-lg">
+                      {doc.ocrDetails}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-border flex justify-end">
+              <button
+                onClick={() => setInspectDocsToken(null)}
+                className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -263,9 +315,21 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
               {/* Current Serving Card */}
               {myServingToken ? (
                 <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/30 p-5 text-center">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-                    Currently Serving at Counter {myCounter}
-                  </span>
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-emerald-500/20">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                      Currently Serving at Counter {myCounter}
+                    </span>
+                    {myServingToken.uploadedDocs && myServingToken.uploadedDocs.length > 0 && (
+                      <button
+                        onClick={() => setInspectDocsToken(myServingToken)}
+                        className="text-[11px] font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded-lg border border-emerald-300 flex items-center gap-1"
+                      >
+                        <Eye className="size-3" />
+                        <span>Inspect Docs ({myServingToken.uploadedDocs.length})</span>
+                      </button>
+                    )}
+                  </div>
+
                   <p className="token-number font-mono text-5xl font-black text-emerald-700 mt-2">
                     {myServingToken.number}
                   </p>
@@ -276,7 +340,69 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     {myServingToken.phone}
                   </p>
 
-                  <div className="mt-5 grid grid-cols-3 gap-2">
+                  {/* 6-DIGIT OTP COUNTER HANDSHAKE VERIFICATION */}
+                  <div className="mt-4 rounded-xl bg-slate-900 p-3.5 text-white text-left">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-300 flex items-center gap-1">
+                        <Key className="size-3 text-cyan-400" />
+                        Citizen OTP Handshake
+                      </span>
+                      {myServingToken.otp && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputOtp(myServingToken.otp!.replace(/\s+/g, ''));
+                            setOtpError(null);
+                            showToast('Demo OTP auto-filled!');
+                          }}
+                          className="text-[10px] font-bold text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/40 hover:bg-cyan-900"
+                        >
+                          Auto-Fill Demo OTP ({myServingToken.otp})
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        maxLength={7}
+                        value={inputOtp}
+                        onChange={e => {
+                          setInputOtp(e.target.value);
+                          setOtpError(null);
+                        }}
+                        placeholder="6-digit OTP (e.g. 482 910)"
+                        className="flex-1 rounded-lg bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-center font-mono text-xs font-bold text-cyan-200 focus:outline-hidden"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!inputOtp.trim()) {
+                            setOtpError('Please enter 6-digit OTP');
+                            return;
+                          }
+                          const res = verifyOtpAndCompleteToken(myServingToken.id, inputOtp);
+                          if (res.success) {
+                            showToast(`✓ Verified! Token ${myServingToken.number} completed.`);
+                            setInputOtp('');
+                            setOtpError(null);
+                          } else {
+                            setOtpError(res.error || 'Invalid OTP');
+                          }
+                        }}
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 shrink-0"
+                      >
+                        Verify OTP
+                      </button>
+                    </div>
+
+                    {otpError && (
+                      <p className="mt-1.5 text-[11px] text-rose-400 font-medium">
+                        {otpError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2">
                     <button
                       onClick={handleRecall}
                       className="rounded-xl border border-emerald-300 bg-emerald-100/60 px-3 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-200"
@@ -285,9 +411,10 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
                     </button>
                     <button
                       onClick={handleCompleteCurrent}
-                      className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                      className="rounded-xl bg-slate-700 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
+                      title="Direct complete without OTP check"
                     >
-                      Complete
+                      Bypass OTP
                     </button>
                     <button
                       onClick={handleNoShow}

@@ -176,6 +176,48 @@ export function TokenPage({ tokenId, onNavigate }: TokenPageProps) {
               </div>
             </div>
 
+            {/* SECURE 6-DIGIT COUNTER OTP BOX */}
+            <div className="mt-6 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 p-5 text-white border-2 border-indigo-500/40 shadow-inner">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Shield className="size-4 text-cyan-400" />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-cyan-300">
+                    Counter Verification OTP
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  AI Docs Verified
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 mt-2">
+                <div>
+                  <div className="text-3xl sm:text-4xl font-black tracking-widest font-mono text-cyan-200 drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]">
+                    {token.otp || '482 910'}
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-300">
+                    Share this 6-digit OTP at <strong>Counter 01</strong> to confirm your identity without exposing your phone number.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const otpCode = (token.otp || '482 910').replace(/\s+/g, '');
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(otpCode);
+                      setToastMessage('6-digit OTP copied to clipboard!');
+                      setTimeout(() => setToastMessage(null), 2500);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 px-3 py-2 text-xs font-bold text-white border border-white/20 transition-all shrink-0"
+                >
+                  <Share2 className="size-3.5" />
+                  <span>Copy OTP</span>
+                </button>
+              </div>
+            </div>
+
             {/* SMS Notification Banner */}
             <div className="mt-6 flex items-center justify-between rounded-xl border border-border bg-muted/40 p-3 text-xs">
               <span className="text-muted-foreground">

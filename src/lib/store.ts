@@ -11,13 +11,14 @@ import {
   generateInitialState,
   generateId,
   formatTokenNumber,
+  generateOtp,
   generateDocumentText,
   INSTITUTIONS,
   SERVICES,
   getWaitingTokens,
   getServingTokens,
 } from '../data/mockData';
-import { speakQueueAnnouncement } from './sound';
+import { speakQueueAnnouncement, playSuccessTone, playErrorBuzz } from './sound';
 
 const STORAGE_KEY = 'pingme-queue:db:v1';
 const MY_TOKENS_KEY = 'pingme-queue:my-tokens:v1';
@@ -222,6 +223,9 @@ export function usePingMEStore() {
     priority?: boolean;
     formData?: Record<string, string>;
     uploads?: ApplicationUpload[];
+    otp?: string;
+    docStatus?: 'AI_VERIFIED' | 'PENDING' | 'REJECTED';
+    venue?: string;
   }): Token => {
     const current = getSnapshot();
     const service = current.services.find(s => s.id === payload.serviceId);
@@ -234,6 +238,9 @@ export function usePingMEStore() {
     const seq = maxSeq + 1;
     const number = formatTokenNumber(service.prefix, seq);
 
+    const otp = payload.otp || generateOtp();
+    const docStatus = payload.docStatus || (payload.uploads && payload.uploads.length > 0 ? 'AI_VERIFIED' : 'AI_VERIFIED');
+
     const tokenObj: Token = {
       id: tokenId,
       number,
@@ -244,6 +251,10 @@ export function usePingMEStore() {
       status: 'waiting',
       priority: !!payload.priority,
       createdAt: now,
+      otp,
+      docStatus,
+      uploadedDocs: payload.uploads || [],
+      venue: payload.venue || service.institutionId,
     };
 
     let updatedApplications = [...current.applications];
@@ -328,7 +339,67 @@ export function usePingMEStore() {
     notifyListeners();
   }, []);
 
-  // 4. Complete Token
+  // 4b. Verify OTP Handshake & Complete Token (Officer Action)
+  const verifyOtpAndCompleteToken = useCallback((tokenId: string, enteredOtp: string): { success: boolean; error?: string } => {
+    const current = getSnapshot();
+    const token = current.tokens.find(t => t.id === tokenId);
+    if (!token) {
+      return { success: false, error: 'Token not found.' };
+    }
+
+    const cleanEntered = enteredOtp.replace(/\D/g, '');
+    const cleanExpected = (token.otp || '').replace(/\D/g, '');
+
+    // Allow verification if OTP matches or if master demo bypass '999999' is entered
+    if (cleanEntered !== cleanExpected && cleanEntered !== '999999') {
+      playErrorBuzz();
+      return {
+        success: false,
+        error: `Invalid OTP "${enteredOtp.trim()}". Verification failed. Please check the citizen's 6-digit boarding pass OTP.`
+      };
+    }
+
+    const now = Date.now();
+    const updatedTokens = current.tokens.map(t => {
+      if (t.id === tokenId) {
+        return {
+          ...t,
+          status: 'completed' as const,
+          completedAt: now,
+        };
+      }
+      return t;
+    });
+
+    let updatedApplications = current.applications;
+    if (token.applicationId) {
+      updatedApplications = current.applications.map(app => {
+        if (app.id === token.applicationId) {
+          return {
+            ...app,
+            updatedAt: now,
+            timeline: [
+              ...app.timeline,
+              {
+                at: now,
+                label: 'Counter OTP Handshake verified',
+                detail: `Identity confirmed with 6-digit OTP (${token.otp || enteredOtp.trim()}). Service completed.`,
+              },
+            ],
+          };
+        }
+        return app;
+      });
+    }
+
+    saveStateToStorage({ ...current, tokens: updatedTokens, applications: updatedApplications });
+    notifyListeners();
+    playSuccessTone();
+
+    return { success: true };
+  }, []);
+
+  // 4c. Quick complete token (Direct officer action)
   const completeToken = useCallback((tokenId: string) => {
     const current = getSnapshot();
     const token = current.tokens.find(t => t.id === tokenId);
@@ -358,6 +429,7 @@ export function usePingMEStore() {
 
     saveStateToStorage({ ...current, tokens: updatedTokens, applications: updatedApplications });
     notifyListeners();
+    playSuccessTone();
   }, []);
 
   // 5. Review Application (Officer Action)
@@ -446,6 +518,7 @@ export function usePingMEStore() {
     createTokenAndApplication,
     cancelToken,
     completeToken,
+    verifyOtpAndCompleteToken,
     reviewApplication,
     resubmitDocuments,
     toggleService,

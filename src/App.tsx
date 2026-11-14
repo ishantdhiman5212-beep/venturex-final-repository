@@ -8,6 +8,7 @@ import { ApplyPage } from './pages/ApplyPage';
 import { TokenPage } from './pages/TokenPage';
 import { StatusPage } from './pages/StatusPage';
 import { AdminPage } from './pages/AdminPage';
+import { SplitDemoPage } from './pages/SplitDemoPage';
 
 export function App() {
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -36,6 +37,8 @@ export function App() {
 
   if (pathname === '/' || pathname === '') {
     content = <HomePage onNavigate={navigate} />;
+  } else if (pathname === '/split') {
+    content = <SplitDemoPage onNavigate={navigate} />;
   } else if (pathname === '/scan') {
     content = <ScanPage onNavigate={navigate} />;
   } else if (pathname === '/services') {

@@ -62,16 +62,23 @@ export interface Token {
   calledAt?: number;
   completedAt?: number;
   applicationId?: string;
+  otp?: string;
+  docStatus?: 'AI_VERIFIED' | 'PENDING' | 'REJECTED';
+  uploadedDocs?: ApplicationUpload[];
+  venue?: string;
 }
 
 export interface ApplicationUpload {
   requirementId: string;
+  requirementLabel?: string;
   fileName: string;
   sizeBytes: number;
   mimeType: string;
   uploadedAt: number;
   simulated?: boolean;
   fileData?: string;
+  thumbnail?: string;
+  previewUrl?: string;
   ocrVerified?: boolean;
   ocrScore?: number;
   ocrDetails?: string;

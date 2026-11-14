@@ -13,6 +13,7 @@ import {
   QrCode,
   LayoutGrid,
   FileCheck2,
+  Zap,
 } from 'lucide-react';
 import { usePingMEStore, getMyTokenIds } from '../lib/store';
 import { isSoundEnabled, setSoundEnabled, playPreviewChime } from '../lib/sound';
@@ -82,9 +83,10 @@ export function CitizenShell({ children, activePath = '/', onNavigate }: Citizen
 
   const navItems = [
     { path: '/', label: 'Home', icon: LayoutGrid },
+    { path: '/split', label: 'Split Live Demo', icon: Zap },
     { path: '/scan', label: 'Scan QR', icon: QrCode },
     { path: '/services', label: 'Services', icon: Sparkles },
-    { path: '/status', label: 'Track status', icon: FileCheck2 },
+    { path: '/admin', label: 'Admin Desk', icon: Shield },
   ];
 
   const handleNav = (p: string) => {

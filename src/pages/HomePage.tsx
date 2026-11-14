@@ -12,6 +12,7 @@ import {
   Volume2,
   Clock,
   Building2,
+  Zap,
 } from 'lucide-react';
 import { CategoryIcon } from '../components/CategoryIcon';
 import { CATEGORIES } from '../data/mockData';
@@ -125,11 +126,19 @@ export function HomePage({ onNavigate }: HomePageProps) {
             {/* Hero CTAs */}
             <div className="mt-8 flex flex-wrap items-center gap-3.5">
               <button
+                onClick={() => onNavigate('/split')}
+                className="btn-press inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3.5 text-base font-extrabold text-white shadow-elevated transition-all hover:-translate-y-0.5 hover:shadow-2xl active:translate-y-0"
+              >
+                <Zap className="size-5 text-white animate-pulse" />
+                Live Split Demo
+              </button>
+
+              <button
                 onClick={() => onNavigate('/scan')}
                 className="btn-press inline-flex items-center gap-2 rounded-xl bg-card px-5 py-3.5 text-base font-bold text-card-foreground shadow-elevated transition-all hover:-translate-y-0.5 hover:shadow-2xl active:translate-y-0"
               >
                 <QrCode className="size-5 text-primary" />
-                Scan QR to join
+                Scan Camera QR
               </button>
 
               <button
